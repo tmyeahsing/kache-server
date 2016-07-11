@@ -1,7 +1,8 @@
 node_modules
 start.sh
 .avoscloud
-
+.idea
 # VIM
 *~
 *.swp
+.avoscloud/
