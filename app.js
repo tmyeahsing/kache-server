@@ -4,15 +4,15 @@ var timeout = require('connect-timeout');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var todos = require('./routes/todos');
 var AV = require('leanengine');
+var fs = require('fs');
+var routes = fs.readdirSync('./routes');
 
 var app = express();
 
-// 设置模板引擎
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.use(express.static('public'));
+// 设置静态文件目录
+app.use('/static', express.static('static'));
+app.use(express.static('views'));
 
 // 设置默认超时时间
 app.use(timeout('15s'));
@@ -31,7 +31,9 @@ app.get('/', function(req, res) {
 });
 
 // 可以将一类的路由单独保存在一个文件中
-app.use('/todos', todos);
+routes.forEach(function(ele, i){
+  app.use('/api/' + ele.replace(/\.[^\.]+$/, ''), require('./routes/' + ele));
+});
 
 app.use(function(req, res, next) {
   // 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器
