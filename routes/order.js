@@ -18,25 +18,18 @@ router.get('/', function(req, res, next) {
 // 新增 Todo 项目
 router.post('/', function(req, res, next) {
   var order = new Order();
-  console.log(req.params)
-  /*var filePromises = [];
-  var self = this;
-  this.$refs.uploader.uploadFiles.forEach(function (ele, i) {
-    filePromises.push((new AV.File('order', ele.file).save()));
-  });
-  Promise.all(filePromises).then(function (savedFiles) {
-    savedFiles.map(function(ele){
-      return ele.attributes.url;
-    })
-    orderObject.save({
-      desc: self.typeMap[self.type],
-      images:savedFiles,
-      type: 1,
-      status: 0
-    }).then(function(order){
-      console.log(order);
-    })
-  });*/
+  var data = {};
+  data.type = parseInt(req.body.type);
+  data.status = parseInt(req.body.status);
+  data.desc = req.body.desc;
+  data.images = typeof req.body['images[]'] === 'string' ? new Array(req.body['images[]']) : req.body['images[]'];
+
+  order.save(data).then(function(result){
+    res.send({
+      success: true,
+      data: result
+    });
+  }).catch(err => res.send(err));
 });
 
 module.exports = router;
