@@ -23,7 +23,7 @@ router.post('/', function(req, res, next) {
   data.status = parseInt(req.body.status);
   data.desc = req.body.desc;
   data.images = typeof req.body['images[]'] === 'string' ? new Array(req.body['images[]']) : req.body['images[]'];
-
+  data.thumbnails = typeof req.body['thumbnails[]'] === 'string' ? new Array(req.body['thumbnails[]']) : req.body['thumbnails[]'];
   order.save(data).then(function(result){
     res.send({
       success: true,
