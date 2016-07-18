@@ -8,10 +8,10 @@ var AV = require('leanengine');
 var fs = require('fs');
 var routes = fs.readdirSync('./routes');
 var app = express();
+
 // 服务端需要使用 connect-busboy（通过 npm install 安装）
 var busboy = require('connect-busboy');
-// 使用这个中间件
-app.use(busboy());
+app.use('/api/upload/', busboy());
 
 // 设置静态文件目录
 app.use('/static', express.static('static'));
