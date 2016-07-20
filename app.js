@@ -3,15 +3,42 @@ var express = require('express');
 var timeout = require('connect-timeout');
 var path = require('path');
 var cookieParser = require('cookie-parser');
+var cookieSession = require('cookie-session');
 var bodyParser = require('body-parser');
 var AV = require('leanengine');
 var fs = require('fs');
 var routes = fs.readdirSync('./routes');
 var app = express();
-
 // 服务端需要使用 connect-busboy（通过 npm install 安装）
 var busboy = require('connect-busboy');
-app.use('/api/upload/', busboy());
+/*var config = require('./config/wechat_config')
+var api = require('wechat-api');
+var wapi = new api(config.appId, config.appSecret)
+wapi.createMenu({
+  button: [
+    {
+      type: 'view',
+      "name":"我要报修",
+      "url":"http://1ehesmbxkn.proxy.qqbrowser.cc/fast_sign.html"
+    }
+  ]
+}, function(err, result){
+  console.log(result)
+});*/
+
+app.set('views', path.join(__dirname, 'templates'));
+app.set('view engine', 'html');
+// 加载云函数定义
+require('./cloud');
+
+//微信授权
+app.use('/*.html', require('./middleware/wx_grant'));
+
+//工具插件
+app.use(require('./middleware/util'));
+
+// 加载云引擎中间件
+app.use(AV.express());
 
 // 设置静态文件目录
 app.use('/static', express.static('static'));
@@ -20,14 +47,14 @@ app.use(express.static('views'));
 // 设置默认超时时间
 app.use(timeout('15s'));
 
-// 加载云函数定义
-require('./cloud');
-// 加载云引擎中间件
-app.use(AV.express());
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+// 加载 cookieSession 以支持 AV.User 的会话状态， 缓存30天
+app.use(AV.Cloud.CookieSession({ secret: 'dakache', fetchUser: false, maxAge: 30*24*60*60*1000 }));
+app.use(cookieSession({ secret: 'dakache', maxAge: 30*24*60*60*1000 }));
+//用busboy上传文件
+app.use('/api/upload/', busboy());
 
 app.get('/', function(req, res) {
   res.redirect('/fast_sign.html');
