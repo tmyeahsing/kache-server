@@ -19,8 +19,7 @@ router.get('/login_pc', function(req, res, next) {
 })
 
 router.get('/redir_code', function(req, res, next) {
-    res.send('1')
-	/*if(req.query.code) {
+	if(req.query.code) {
 		client.getAccessToken(req.query.code, function (err, result) {
 		  if(err) {
 		  	return next(err)
@@ -43,7 +42,7 @@ router.get('/redir_code', function(req, res, next) {
 		});
 	} else {
 		next('no code query')
-	}*/
+	}
 })
 
 module.exports = router;

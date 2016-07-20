@@ -31,6 +31,9 @@ app.set('view engine', 'html');
 // 加载云函数定义
 require('./cloud');
 
+// 加载 cookieSession 以支持 AV.User 的会话状态， 缓存30天
+app.use(AV.Cloud.CookieSession({ secret: 'dakache', fetchUser: false, maxAge: 30*24*60*60*1000 }));
+app.use(cookieSession({ secret: 'dakache', maxAge: 30*24*60*60*1000 }));
 //微信授权
 app.use('/*.html', require('./middleware/wx_grant'));
 
@@ -50,9 +53,7 @@ app.use(timeout('15s'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-// 加载 cookieSession 以支持 AV.User 的会话状态， 缓存30天
-app.use(AV.Cloud.CookieSession({ secret: 'dakache', fetchUser: false, maxAge: 30*24*60*60*1000 }));
-app.use(cookieSession({ secret: 'dakache', maxAge: 30*24*60*60*1000 }));
+
 //用busboy上传文件
 app.use('/api/upload/', busboy());
 
