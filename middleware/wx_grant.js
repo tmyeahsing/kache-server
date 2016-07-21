@@ -1,3 +1,4 @@
+var AV = require('leanengine')
 module.exports = function(req, res, next){
     "use strict";
     if(req.sessionToken){

@@ -19,7 +19,7 @@ wapi.createMenu({
     {
       type: 'view',
       "name":"我要报修",
-      "url":"http://1ehesmbxkn.proxy.qqbrowser.cc/fast_sign.html"
+      "url":"http://ajosvckglb.proxy.qqbrowser.cc/fast_sign.html"
     }
   ]
 }, function(err, result){
