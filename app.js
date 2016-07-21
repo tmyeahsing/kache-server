@@ -11,15 +11,23 @@ var routes = fs.readdirSync('./routes');
 var app = express();
 // 服务端需要使用 connect-busboy（通过 npm install 安装）
 var busboy = require('connect-busboy');
-/*var config = require('./config/wechat_config')
+
+/*//公众号按钮
+var config = require('./config/wechat_config')
 var api = require('wechat-api');
 var wapi = new api(config.appId, config.appSecret)
+var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
 wapi.createMenu({
   button: [
     {
-      type: 'view',
-      "name":"我要报修",
-      "url":"http://ajosvckglb.proxy.qqbrowser.cc/fast_sign.html"
+      "type": 'view',
+      "name":'我要报修',
+      "url":'http://'+ hostname +'/fast_sign.html'
+    },
+    {
+      "type": 'view',
+      "name":'我的订单',
+      "url":'http://'+ hostname +'/order_list.html'
     }
   ]
 }, function(err, result){
