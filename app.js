@@ -17,6 +17,7 @@ var config = require('./config/wechat_config')
 var api = require('wechat-api');
 var wapi = new api(config.appId, config.appSecret)
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
+var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
 wapi.createMenu({
   button: [
     {
@@ -52,8 +53,17 @@ app.use(require('./middleware/util'));
 app.use(AV.express());
 
 // 设置静态文件目录
-app.use('/static', express.static('static'));
-app.use(express.static('views'));
+  //将授权信息以js返回
+app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
+
+//开发环境静态文件代理
+if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
+  app.use('/static', express.static('../kache/dist/static'));
+  app.use(express.static('../kache/dist/views'));
+}else{
+  app.use('/static', express.static('static'));
+  app.use(express.static('views'));
+}
 
 // 设置默认超时时间
 app.use(timeout('15s'));

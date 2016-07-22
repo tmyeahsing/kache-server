@@ -8,7 +8,6 @@ var Order = AV.Object.extend('Order');
 
 // 查询 Todo 列表
 router.get('/', function(req, res, next) {
-  console.log(req.currentUser)
   if(req.currentUser) {
     var query = new AV.Query(Order);
     query.descending('createdAt');
@@ -30,7 +29,7 @@ router.post('/', function(req, res, next) {
     data.desc = req.body.desc;
     data.images = typeof req.body['images[]'] === 'string' ? new Array(req.body['images[]']) : req.body['images[]'];
     data.thumbnails = typeof req.body['thumbnails[]'] === 'string' ? new Array(req.body['thumbnails[]']) : req.body['thumbnails[]'];
-    data.createdBy = AV.Object.createWithoutData('_User', req.body.createdBy);
+    data.createdBy = req.currentUser;
 
     //权限控制
     var appAdminRole = new AV.Role("appAdmin");
@@ -47,7 +46,9 @@ router.post('/', function(req, res, next) {
         success: true,
         data: result
       });
-    }).catch(err => res.send(err));
+    }).catch(function(err){
+      res.send(err);
+    });
   }else{
     res.loginAndRedirectBack();
   }
