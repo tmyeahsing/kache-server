@@ -4,9 +4,23 @@ var config = require('../config/wechat_config')
 var api = require('wechat-api');
 var wapi = new api(config.appId, config.appSecret)
 
-router.post('/', function(req, res, next) {
-	var name = req.body.group_name;
-	wapi.createGroup(name, function(err, result){
+//host
+var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
+//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+
+router.put('/', function(req, res, next) {
+	wapi.createMenu({
+		button: [
+			{
+				"type": 'view',
+				"name":'订单管理',
+				"url":'http://'+ hostname +'/order_list_admin.html'
+			}
+		],
+		matchrule:{
+			group_id: 100
+		}
+	}, function(err, result){
 		if(!err){
 			res.send(result)
 		}else{
