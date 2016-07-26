@@ -1,7 +1,7 @@
 module.exports = function(req, res, next){
     "use strict";
     console.log(req.sessionToken)
-    if(req.sessionToken){
+    if(req.currentUser){
         var content = [
             "SessionToken = '",
             req.sessionToken,
