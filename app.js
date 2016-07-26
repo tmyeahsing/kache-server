@@ -17,7 +17,7 @@ var config = require('./config/wechat_config')
 var api = require('wechat-api');
 var wapi = new api(config.appId, config.appSecret)
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
-//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
 wapi.createMenu({
   button: [
     {
