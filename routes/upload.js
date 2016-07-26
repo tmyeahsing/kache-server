@@ -7,10 +7,12 @@ router.post('/', function (req, res, next) {
     var base64data = [];
     if (req.busboy) {
         req.busboy.on('file', function (fieldname, file, fileName, encoding, mimeType) {
+            console.log(file)
             var buffer = '';
             file.setEncoding('base64');
             file.on('data', function (data) {
                 buffer += data;
+                console.log(buffer.length)
             }).on('end', function () {
                 base64data.push({
                     data: buffer,
@@ -19,6 +21,7 @@ router.post('/', function (req, res, next) {
             });
         }).on('finish', function () {
             var fPromises = [];
+            console.log(base64data.length)
             base64data.forEach(function (ele, i) {
                 var f = new AV.File(base64data[i].name, {
                     base64: base64data[i].data

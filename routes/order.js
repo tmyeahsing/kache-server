@@ -24,12 +24,13 @@ router.post('/', function(req, res, next) {
   if(req.currentUser) {
     var order = new Order();
     var data = {};
-    data.type = parseInt(req.body.type);
-    data.status = parseInt(req.body.status);
+    data.type = 0;
+    data.status = 0;
     data.desc = req.body.desc;
     data.images = typeof req.body['images[]'] === 'string' ? new Array(req.body['images[]']) : req.body['images[]'];
     data.thumbnails = typeof req.body['thumbnails[]'] === 'string' ? new Array(req.body['thumbnails[]']) : req.body['thumbnails[]'];
     data.createdBy = req.currentUser;
+    data.orderId = '' + (+new Date())
 
     //权限控制
     var appAdminRole = new AV.Role("appAdmin");
