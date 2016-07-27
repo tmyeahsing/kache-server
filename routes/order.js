@@ -1,12 +1,13 @@
 'use strict';
 var router = require('express').Router();
 var AV = require('leanengine');
+var parseArray = require('../utils/parse-body-array');
 
 // `AV.Object.extend` 方法一定要放在全局变量，否则会造成堆栈溢出。
 // 详见： https://leancloud.cn/docs/js_guide.html#对象
 var Order = AV.Object.extend('Order');
 
-// 查询 Todo 列表
+// 查询 Order 列表
 router.get('/', function(req, res, next) {
   if(req.currentUser) {
     var query = new AV.Query(Order);
@@ -17,6 +18,31 @@ router.get('/', function(req, res, next) {
   }else{
     res.loginAndRedirectBack();
   }
+});
+
+//查询
+
+// 根据状态码查询订单计数
+router.get('/count', function(req, res, next) {
+  var statusArray = req.query.status;
+  var oPromises = [];
+  statusArray.forEach(function (ele, i) {
+    var query = new AV.Query('Order');
+    query.equalTo('status', parseInt(ele));
+    oPromises.push(query.count());
+  });
+  Promise.all(oPromises).then(function (results) {
+    var ret = {};
+    results.forEach(function (ele, i) {
+      ret[statusArray[i]] = ele;
+    });
+    res.send({
+      success: true,
+      data: ret
+    });
+  }).catch(function (err) {
+    res.status(500).send(err);
+  });
 });
 
 // 新增 Todo 项目

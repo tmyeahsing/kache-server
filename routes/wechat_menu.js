@@ -1,12 +1,52 @@
 'use strict';
 var router = require('express').Router();
-var config = require('../config/wechat_config')
-var api = require('wechat-api');
-var wapi = new api(config.appId, config.appSecret)
+var wapi = require('../bootstrap/wechat-api')
 
 //host
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
-var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+
+
+router.post('/custom', function(req, res, next){
+	wapi.createCustomMenu({
+		button: [
+			{
+				"type": 'view',
+				"name":'订单管理',
+				"url":'http://'+ hostname +'/order_list_admin.html'
+			}
+		],
+		matchrule: {
+			"group_id":"100"
+		}
+	}, function(err, result){
+		if(!err){
+			res.send(result)
+		}else{
+			res.send(err)
+		}
+	});
+})
+
+router.get('/',  function(req, res, next){
+	wapi.getMenu(function(err, result){
+		if(!err){
+			res.send(result)
+		}else{
+			res.send(err)
+		}
+	});
+})
+
+router.get('/config',  function(req, res, next){
+	wapi.getMenuConfig(function(err, result){
+		if(!err){
+			res.send(result)
+		}else{
+			res.send(err)
+		}
+	});
+})
 
 router.put('/', function(req, res, next) {
 	wapi.createMenu({
@@ -31,19 +71,8 @@ router.put('/', function(req, res, next) {
 	});
 });
 
-router.put('/custom', function(req, res, next){
-	wapi.createCustomMenu({
-		button: [
-			{
-				"type": 'view',
-				"name":'订单管理',
-				"url":'http://'+ hostname +'/order_list_admin.html'
-			}
-		],
-		matchrule: {
-			"group_id":"100"
-	   	}
-	}, function(err, result){
+router.delete('/', function(req, res, next){
+	wapi.removeMenu(function(err, result){
 		if(!err){
 			res.send(result)
 		}else{
@@ -51,5 +80,4 @@ router.put('/custom', function(req, res, next){
 		}
 	});
 })
-
 module.exports = router;

@@ -23,7 +23,7 @@ router.post('/', function(req, res, next) {
 	});
 });
 
-router.post('/move_user_to', function(req, res, next){
+router.put('/move_user_to', function(req, res, next){
 	var openid = req.body.openid;
 	var groupId = parseInt(req.body.group_id);
 	wapi.moveUserToGroup(openid, groupId, function(err, result){

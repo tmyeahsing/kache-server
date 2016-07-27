@@ -21,7 +21,6 @@ router.post('/', function (req, res, next) {
             });
         }).on('finish', function () {
             var fPromises = [];
-            console.log(base64data.length)
             base64data.forEach(function (ele, i) {
                 var f = new AV.File(base64data[i].name, {
                     base64: base64data[i].data
