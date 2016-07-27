@@ -7,8 +7,8 @@ var wapi = new api(config.appId, config.appSecret, function(cb){
     var query = new AV.Query(Cache);
     query.equalTo('key', 'wechat_api_token');
     query.find().then(function (results) {
-        if(results[0] && results[0].value){
-            cb(null, JSON.parse(results[0].value));
+        if(results[0] && results[0].get('value')){
+            cb(null, JSON.parse(results[0].get('value')));
         }else{
             cb(null, {"access_token": "ACCESS_TOKEN","expires_in": 7200});
         }
