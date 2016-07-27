@@ -1,8 +1,16 @@
 'use strict';
 var router = require('express').Router();
-var config = require('../config/wechat_config')
-var api = require('wechat-api');
-var wapi = new api(config.appId, config.appSecret)
+var wapi = require('../bootstrap/wechat-api')
+
+router.get('/', function(req, res, next){
+	wapi.getGroups(function(err, result) {
+		if (!err) {
+			res.send(result)
+		} else {
+			res.send(err)
+		}
+	});
+})
 
 router.post('/', function(req, res, next) {
 	var name = req.body.group_name;
