@@ -2,6 +2,7 @@
 var router = require('express').Router();
 var AV = require('leanengine');
 var parseArray = require('../utils/parse-body-array');
+var request = require('request')
 
 // `AV.Object.extend` 方法一定要放在全局变量，否则会造成堆栈溢出。
 // 详见： https://leancloud.cn/docs/js_guide.html#对象
@@ -69,10 +70,56 @@ router.post('/', function(req, res, next) {
 
     //保存
     order.save(data).then(function(result){
-      res.send({
-        success: true,
-        data: result
+      var adminNotifyP = new Promise(function(resolve){
+        request.post({
+          url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
+          form: {
+            target: 'admin',
+            openid: 'oKGD_vnz-JnTTBKbxj6aolZ0IFGc',
+            orderId: data.orderId,
+            url: req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　result.id
+          }
+        }, function(){
+          resolve();
+        })
       });
+      var adminNotifyP1 = new Promise(function(resolve){
+        request.post({
+          url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
+          form: {
+            target: 'admin',
+            openid: 'oKGD_vsUGIsc0BEoPYj-eCqeglZM',
+            orderId: data.orderId,
+            url: req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　result.id
+          }
+        }, function(){
+          resolve();
+        })
+      });
+      var creatorNotyfyP = new Promise(function(resolve){
+        req.currentUser.fetch().then(function(user){
+          request.post({
+            url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
+            form: {
+              target: 'creator',
+              openid: user.get('info').weixin.openid,
+              orderId: data.orderId,
+              url: req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id
+            }
+          }, function(){
+            resolve();
+          })
+        }).catch(function(){
+          resolve();
+        });
+      });
+
+      Promise.all([adminNotifyP, adminNotifyP1, creatorNotyfyP]).then(function(){
+        res.send({
+          success: true,
+          data: result
+        });
+      })
     }).catch(function(err){
       res.send(err);
     });

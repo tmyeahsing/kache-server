@@ -9,9 +9,15 @@ var AV = require('leanengine');
 var fs = require('fs');
 var routes = fs.readdirSync('./routes');
 var app = express();
+var nunjucks = require('nunjucks');
 // 服务端需要使用 connect-busboy（通过 npm install 安装）
 var busboy = require('connect-busboy');
 
+// 设置模板引擎
+nunjucks.configure('templates', {
+  autoescape: true,
+  express: app
+});
 app.set('views', path.join(__dirname, 'templates'));
 app.set('view engine', 'html');
 // 加载云函数定义

@@ -4,7 +4,7 @@ var wapi = require('../bootstrap/wechat-api')
 
 //host
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
-var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
 
 
 router.post('/custom', function(req, res, next){
@@ -71,6 +71,7 @@ router.put('/', function(req, res, next) {
 	});
 });
 
+//删除所有菜单
 router.delete('/', function(req, res, next){
 	wapi.removeMenu(function(err, result){
 		if(!err){
@@ -80,4 +81,17 @@ router.delete('/', function(req, res, next){
 		}
 	});
 })
+
+//删除所有个性化菜单
+router.delete('/custom', function(req, res, next){
+	var menu_id = req.body.id;
+	wapi.removeCustomMenu(menu_id, function(err, result){
+		if(!err){
+			res.send(result)
+		}else{
+			res.send(err)
+		}
+	});
+})
+
 module.exports = router;
