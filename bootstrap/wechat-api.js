@@ -19,6 +19,10 @@ var wapi = new api(config.appId, config.appSecret, function(cb){
     "use strict";
     var cache = AV.Object.createWithoutData('Cache', '5798a0e51532bc0060f06240');
     cache.set('value', JSON.stringify(token));
-    cache.save().then(cb);
+    cache.save().then(function(result){
+        cb(null, result);
+    }).catch(function(err){
+        cb(err)
+    });
 });
 module.exports = wapi;
