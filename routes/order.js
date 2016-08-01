@@ -7,6 +7,7 @@ var request = require('request')
 // `AV.Object.extend` 方法一定要放在全局变量，否则会造成堆栈溢出。
 // 详见： https://leancloud.cn/docs/js_guide.html#对象
 var Order = AV.Object.extend('Order');
+var Quotation = AV.Object.extend('Quotation');
 
 // 查询 Order 列表
 router.get('/', function(req, res, next) {
@@ -46,7 +47,7 @@ router.get('/count', function(req, res, next) {
   });
 });
 
-// 新增 Todo 项目
+// 新增 Order
 router.post('/', function(req, res, next) {
   if(req.currentUser) {
     var order = new Order();
@@ -127,5 +128,47 @@ router.post('/', function(req, res, next) {
     res.loginAndRedirectBack();
   }
 });
+
+//接单（附报价）
+router.put('/take', function (req, res, next) {
+  var orderObjectId = req.body.order_object_id;
+  var order = AV.Object.createWithoutData('Order', orderObjectId);
+  var roleQuery = new AV.Query(AV.Role);
+  roleQuery.equalTo('users', req.currentUser);
+  Promise.all([order.fetch(), AV.Cloud.getServerDate()], roleQuery.find()).then(function(results){
+    console.log(results[2])
+    if(results[0].get('status') != 0){
+      throw {message: '发生错误，订单已被处理'};
+    }
+    if((new Date(results[0].get('createdAt')) - new Date(results[1])) > 30 * 60 * 1000){
+      throw {message: '订单已超时'};
+    }
+
+    var data = {};
+    var quotation = new Quotation();
+    data.dropInFee = parseFloat(req.body.drop_in_fee);
+    data.manHours = parseFloat(req.body.man_hours);
+    data.manUnitPrice = parseFloat(req.body.man_unit_price);
+    data.partsTotal = parseFloat(req.body.parts_total);
+    data.partsDesc = req.body.parts_desc;
+
+    quotation.save(data).then(function(qt){
+      order.set('quotation', qt);
+      order.set('status', 1);
+      order.save().then(function(result){
+        res.send({
+          success: true,
+          data: result
+        });
+      }).catch(function (err) {
+        res.status(502).send(err);
+      });
+    }).catch(function (err) {
+      res.status(502).send(err);
+    });
+  }).catch(function(err){
+    res.status(502).send(err);
+  })
+})
 
 module.exports = router;
