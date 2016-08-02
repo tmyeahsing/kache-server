@@ -139,8 +139,8 @@ router.put('/take', function (req, res, next) {
   var order = AV.Object.createWithoutData('Order', orderObjectId);
   var roleQuery = new AV.Query(AV.Role);
   roleQuery.equalTo('users', req.currentUser);
-  Promise.all([order.fetch(), AV.Cloud.getServerDate(), roleQuery.find()]).then(function(results){
-    var roles = results[2].map(function(ele, i){
+  Promise.all([order.fetch(), roleQuery.find()]).then(function(results){
+    var roles = results[1].map(function(ele, i){
       return ele.get('name')
     })
 
@@ -150,27 +150,39 @@ router.put('/take', function (req, res, next) {
     if(results[0].get('status') != 0){
       throw {message: '发生错误，订单已被处理'};
     }
-    if((new Date(results[0].get('createdAt')) - new Date(results[1])) > 30 * 60 * 1000){
+    if((new Date(results[0].get('createdAt')) - new Date()) > 30 * 60 * 1000){
       throw {message: '订单已超时'};
     }
 
     var data = {};
     var quotation = new Quotation();
-    data.dropInFee = parseFloat(req.body.drop_in_fee);
-    data.manHours = parseFloat(req.body.man_hours);
-    data.manUnitPrice = parseFloat(req.body.man_unit_price);
-    data.partsTotal = parseFloat(req.body.parts_total);
+    data.dropInFee = parseFloat(req.body.drop_in_fee) || 0;
+    data.manHours = parseFloat(req.body.man_hours) || 0;
+    data.manUnitPrice = parseFloat(req.body.man_unit_price) || 0;
+    data.partsTotal = parseFloat(req.body.parts_total) || 0;
     data.partsDesc = req.body.parts_desc;
 
     quotation.save(data).then(function(qt){
       order.set('quotation', qt);
       order.save().then(function(result){
-        res.send({
-          success: true,
-          data: {
-            order: result,
-            quotation: qt
-          }
+        //通知报修人
+        result.get('createdBy').fetch().then(function(creator){
+          request.post({
+            url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_quotation',
+            form: {
+              openid: creator.get('info').weixin.openid,
+              orderId: result.get('orderId'),
+              url: req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id
+            }
+          }, function(){})
+        }).finally(function(){
+          res.send({
+            success: true,
+            data: {
+              order: result,
+              quotation: qt
+            }
+          });
         });
       }).catch(function (err) {
         res.status(502).send(err);
