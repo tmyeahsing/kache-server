@@ -131,12 +131,22 @@ router.post('/', function(req, res, next) {
 
 //接单（附报价）
 router.put('/take', function (req, res, next) {
+/*  if(!req.currentUser){
+    res.status(502).send({message: '未登录'})
+    return;
+  }*/
   var orderObjectId = req.body.order_object_id;
   var order = AV.Object.createWithoutData('Order', orderObjectId);
   var roleQuery = new AV.Query(AV.Role);
   roleQuery.equalTo('users', req.currentUser);
-  Promise.all([order.fetch(), AV.Cloud.getServerDate()], roleQuery.find()).then(function(results){
-    console.log(results[2])
+  Promise.all([order.fetch(), AV.Cloud.getServerDate(), roleQuery.find()]).then(function(results){
+    var roles = results[2].map(function(ele, i){
+      return ele.get('name')
+    })
+
+    if(roles.indexOf('appAdmin') == -1){
+      throw {message: '您无权报价'};
+    }
     if(results[0].get('status') != 0){
       throw {message: '发生错误，订单已被处理'};
     }
@@ -154,11 +164,13 @@ router.put('/take', function (req, res, next) {
 
     quotation.save(data).then(function(qt){
       order.set('quotation', qt);
-      order.set('status', 1);
       order.save().then(function(result){
         res.send({
           success: true,
-          data: result
+          data: {
+            order: result,
+            quotation: qt
+          }
         });
       }).catch(function (err) {
         res.status(502).send(err);
