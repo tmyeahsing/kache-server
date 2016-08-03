@@ -1,13 +1,21 @@
 'use strict';
 var router = require('express').Router();
 var AV = require('leanengine');
-var parseArray = require('../utils/parse-body-array');
-var request = require('request')
+var request = require('request');
+var notice = require('../service/wechat_notice');
 
 // `AV.Object.extend` 方法一定要放在全局变量，否则会造成堆栈溢出。
 // 详见： https://leancloud.cn/docs/js_guide.html#对象
 var Order = AV.Object.extend('Order');
 var Quotation = AV.Object.extend('Quotation');
+
+Promise.prototype.finally = function (callback) {
+  let P = this.constructor;
+  return this.then(
+          value  => P.resolve(callback()).then(() => value),
+          reason => P.resolve(callback()).then(() => { throw reason })
+  );
+};
 
 // 查询 Order 列表
 router.get('/', function(req, res, next) {
@@ -71,51 +79,16 @@ router.post('/', function(req, res, next) {
 
     //保存
     order.save(data).then(function(result){
-      var adminNotifyP = new Promise(function(resolve){
-        request.post({
-          url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
-          form: {
-            target: 'admin',
-            openid: 'oKGD_vnz-JnTTBKbxj6aolZ0IFGc',
-            orderId: data.orderId,
-            url: req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　result.id
-          }
-        }, function(){
-          resolve();
-        })
-      });
-      var adminNotifyP1 = new Promise(function(resolve){
-        request.post({
-          url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
-          form: {
-            target: 'admin',
-            openid: 'oKGD_vsUGIsc0BEoPYj-eCqeglZM',
-            orderId: data.orderId,
-            url: req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　result.id
-          }
-        }, function(){
-          resolve();
-        })
-      });
-      var creatorNotyfyP = new Promise(function(resolve){
-        req.currentUser.fetch().then(function(user){
-          request.post({
-            url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_sign',
-            form: {
-              target: 'creator',
-              openid: user.get('info').weixin.openid,
-              orderId: data.orderId,
-              url: req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id
-            }
-          }, function(){
-            resolve();
-          })
-        }).catch(function(){
-          resolve();
-        });
-      });
+      var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id;
+      var url_a = req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　result.id;
 
-      Promise.all([adminNotifyP, adminNotifyP1, creatorNotyfyP]).then(function(){
+      var adminNotifyP = notice.notify_sign('oKGD_vnz-JnTTBKbxj6aolZ0IFGc', url_a, data.orderId, 'admin');
+      var adminNotifyP1 = notice.notify_sign('oKGD_vsUGIsc0BEoPYj-eCqeglZM', url_a, data.orderId, 'admin');
+      var creatorNotifyP = req.currentUser.fetch().then(function(user){
+        return notice.notify_sign(user.get('info').weixin.openid, url, data.orderId, 'creator')
+      }).catch();
+
+      Promise.all([adminNotifyP, adminNotifyP1, creatorNotifyP]).finally(function(){
         res.send({
           success: true,
           data: result
@@ -131,10 +104,6 @@ router.post('/', function(req, res, next) {
 
 //接单（附报价）
 router.put('/take', function (req, res, next) {
-/*  if(!req.currentUser){
-    res.status(502).send({message: '未登录'})
-    return;
-  }*/
   var orderObjectId = req.body.order_object_id;
   var order = AV.Object.createWithoutData('Order', orderObjectId);
   var roleQuery = new AV.Query(AV.Role);
@@ -167,14 +136,8 @@ router.put('/take', function (req, res, next) {
       order.save().then(function(result){
         //通知报修人
         result.get('createdBy').fetch().then(function(creator){
-          request.post({
-            url: req.protocol + '://' + req.hostname + '/api/wechat_template/notify_quotation',
-            form: {
-              openid: creator.get('info').weixin.openid,
-              orderId: result.get('orderId'),
-              url: req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id
-            }
-          }, function(){})
+          var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' +　result.id;
+          return notice.notify_quotation(creator.get('info').weixin.openid, url, result.get('orderId'));
         }).finally(function(){
           res.send({
             success: true,
@@ -192,6 +155,35 @@ router.put('/take', function (req, res, next) {
     });
   }).catch(function(err){
     res.status(502).send(err);
+  })
+});
+
+//报修人确认下单
+router.put('/confirm', function (req, res, next) {
+  var orderObjectId = req.body.order_object_id;
+  var orderData = AV.Object.createWithoutData('Order', orderObjectId);
+  orderData.fetch().then(function(order){
+    if(order.get('status') != 0){
+      throw {message: '发生错误，订单已被处理'}
+    }
+    if(!order.get('quotation')){
+      throw {message: '发生错误，未对订单报价'}
+    }
+
+    orderData.set('status', 1);
+    orderData.save().then(function(order){
+      var url =  req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　order.id;
+      var p1 = notice.notify_confirm('oKGD_vnz-JnTTBKbxj6aolZ0IFGc', url, order.get('orderId'));
+      var p2 = notice.notify_confirm('oKGD_vsUGIsc0BEoPYj-eCqeglZM', url, order.get('orderId'));
+      Promise.all([p1, p2]).finally(function(){
+        res.send({
+          success: true,
+          data: order
+        })
+      })
+    }).catch(function(err){
+      res.status(502).send(err);
+    })
   })
 })
 
