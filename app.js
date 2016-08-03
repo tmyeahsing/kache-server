@@ -44,7 +44,7 @@ app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
 //开发环境静态文件代理
 if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
 
-  app.use(function(req, res, next) { // vue 项目反代
+  /*app.use(function(req, res, next) { // vue 项目反代
     var r = request({
       url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
     })
@@ -60,9 +60,9 @@ if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'developm
       next()
     })
     req.pipe(r)
-  })
-  /*app.use('/static', express.static('../kache/dist/static'));
-  app.use(express.static('../kache/dist/views'));*/
+  })*/
+  app.use('/static', express.static('../kache/dist/static'));
+  app.use(express.static('../kache/dist/views'));
 }else{
   app.use('/static', express.static('static'));
   app.use(express.static('views'));

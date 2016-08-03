@@ -5,6 +5,7 @@ var wapi = require('../bootstrap/wechat-api')
 //host
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
 var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+//var hostname = 'kache.tmued.com';
 
 
 router.post('/custom', function(req, res, next){
@@ -74,6 +75,7 @@ router.put('/', function(req, res, next) {
 //删除所有菜单
 router.delete('/', function(req, res, next){
 	wapi.removeMenu(function(err, result){
+		console.log(result)
 		if(!err){
 			res.send(result)
 		}else{
