@@ -13,6 +13,8 @@ var nunjucks = require('nunjucks');
 // 服务端需要使用 connect-busboy（通过 npm install 安装）
 var busboy = require('connect-busboy');
 
+var request = require('request'); // 用于本地环境反代到vue项目
+
 // 设置模板引擎
 nunjucks.configure('templates', {
   autoescape: true,
@@ -41,8 +43,26 @@ app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
 
 //开发环境静态文件代理
 if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
-  app.use('/static', express.static('../kache/dist/static'));
-  app.use(express.static('../kache/dist/views'));
+
+  app.use(function(req, res, next) { // vue 项目反代
+    var r = request({
+      url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
+    })
+    r.on('response', response => {
+      if(response.statusCode == 404) {
+        response.destroy()
+        next()
+      } else {
+        response.pipe(res)
+      }
+    })
+    r.on('error', () => {
+      next()
+    })
+    req.pipe(r)
+  })
+  /*app.use('/static', express.static('../kache/dist/static'));
+  app.use(express.static('../kache/dist/views'));*/
 }else{
   app.use('/static', express.static('static'));
   app.use(express.static('views'));

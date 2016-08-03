@@ -2,7 +2,7 @@ var config = require('../config/wechat_config')
 var AV = require('leanengine');
 var Cache = AV.Object.extend('Cache');
 var api = require('wechat-api');
-var wapi = new api(config.appId, config.appSecret, function(cb){
+var wapi = global.wapi = new api(config.appId, config.appSecret, function(cb){
     "use strict";
     var query = new AV.Query(Cache);
     query.equalTo('key', 'wechat_api_token');
