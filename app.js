@@ -41,6 +41,11 @@ app.use(AV.express());
   //将授权信息以js返回
 app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> b88283142c09def91b909d962ef8e8d2cdbcc936
 // 设置默认超时时间
 app.use(timeout('15s'));
 
@@ -62,26 +67,39 @@ routes.forEach(function(ele, i){
 
 //开发环境静态文件代理
 if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
-
+  var concatStream = require('concat-stream');
+  var etag = require('etag');
+  var fresh = require('fresh');
   app.use(function(req, res, next) { // vue 项目反代
-   var r = request({
-   url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
-   })
-   r.on('response', response => {
-   if(response.statusCode == 404) {
-   response.destroy()
-   next()
-   } else {
-   response.pipe(res)
-   }
-   })
-   r.on('error', () => {
-   next()
-   })
-   req.pipe(r)
-   })
-  /*app.use('/static', express.static('../kache/dist/static'));
-  app.use(express.static('../kache/dist/views'));*/
+    var r = request({
+      url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
+    })
+    r.on('response', response => {
+      if(response.statusCode == 404) {
+        response.destroy()
+        next()
+      } else {
+        var res_stream = concatStream(function(buf) {
+          res.setHeader('ETag', etag(buf))
+          if(fresh(req.headers, res._headers)) { // 内容变更
+            res.statusCode = 304;
+            res.end();
+          } else {
+            res.end(buf)
+          }
+        })
+        response.pipe(res_stream)
+      }
+    })
+    r.on('error', () => {
+      next()
+    })
+    req.pipe(r)
+  })
+  /*
+  app.use('/static', express.static('../kache/dist/static'));
+  app.use(express.static('../kache/dist/views'));
+  */
 }else{
   app.use('/static', express.static('static'));
   app.use(express.static('views'));
