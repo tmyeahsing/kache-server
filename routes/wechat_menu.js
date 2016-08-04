@@ -4,8 +4,8 @@ var wapi = require('../bootstrap/wechat-api')
 
 //host
 var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
-//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
-//var hostname = 'kache.tmued.com';
+var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+var hostname = 'kache.tmued.com';
 
 
 router.post('/custom', function(req, res, next){
