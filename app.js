@@ -14,6 +14,7 @@ var nunjucks = require('nunjucks');
 var busboy = require('connect-busboy');
 
 var request = require('request'); // 用于本地环境反代到vue项目
+var compression = require('compression'); // gzip 压缩
 
 // 设置模板引擎
 nunjucks.configure('templates', {
@@ -28,8 +29,12 @@ require('./cloud');
 // 加载 cookieSession 以支持 AV.User 的会话状态， 缓存30天
 app.use(AV.Cloud.CookieSession({ secret: 'dakache', fetchUser: false, maxAge: 30*24*60*60*1000 }));
 app.use(cookieSession({ secret: 'dakache', maxAge: 30*24*60*60*1000 }));
+
+
+
+
 //微信授权
-app.use('/*.html', require('./middleware/wx_grant'));
+//  app.use('/*.html', require('./middleware/wx_grant'));
 
 //工具插件
 app.use(require('./middleware/util'));
@@ -70,6 +75,7 @@ if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'developm
   var concatStream = require('concat-stream');
   var etag = require('etag');
   var fresh = require('fresh');
+  app.use(compression({filter: function(){return true}})); // gzip 压缩
   app.use(function(req, res, next) { // vue 项目反代
     var r = request({
       url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
