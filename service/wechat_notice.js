@@ -26,7 +26,6 @@ module.exports = {
         };
         return new Promise(function (resolve) {
             wapi.sendTemplate(openid, templateId, url, data, function (err, result) {
-                console.log(err)
                 resolve();
             });
         })

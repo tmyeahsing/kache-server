@@ -34,7 +34,7 @@ app.use(cookieSession({ secret: 'dakache', maxAge: 30*24*60*60*1000 }));
 
 
 //微信授权
-//  app.use('/*.html', require('./middleware/wx_grant'));
+app.use('/*.html', require('./middleware/wx_grant'));
 
 //工具插件
 app.use(require('./middleware/util'));
@@ -46,11 +46,6 @@ app.use(AV.express());
   //将授权信息以js返回
 app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> b88283142c09def91b909d962ef8e8d2cdbcc936
 // 设置默认超时时间
 app.use(timeout('15s'));
 

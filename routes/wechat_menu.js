@@ -3,8 +3,8 @@ var router = require('express').Router();
 var wapi = require('../bootstrap/wechat-api')
 
 //host
-var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
-var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
+//var hostname = '1ehesmbxkn.proxy.qqbrowser.cc';
+//var hostname = 'ajosvckglb.proxy.qqbrowser.cc';
 var hostname = 'kache.tmued.com';
 
 
