@@ -41,32 +41,7 @@ app.use(AV.express());
   //将授权信息以js返回
 app.get('/static/grant_info.js', require('./middleware/grant_info.js'));
 
-//开发环境静态文件代理
-if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
 
-  /*app.use(function(req, res, next) { // vue 项目反代
-    var r = request({
-      url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
-    })
-    r.on('response', response => {
-      if(response.statusCode == 404) {
-        response.destroy()
-        next()
-      } else {
-        response.pipe(res)
-      }
-    })
-    r.on('error', () => {
-      next()
-    })
-    req.pipe(r)
-  })*/
-  app.use('/static', express.static('../kache/dist/static'));
-  app.use(express.static('../kache/dist/views'));
-}else{
-  app.use('/static', express.static('static'));
-  app.use(express.static('views'));
-}
 
 // 设置默认超时时间
 app.use(timeout('15s'));
@@ -86,6 +61,46 @@ app.get('/', function(req, res) {
 routes.forEach(function(ele, i){
   app.use('/api/' + ele.replace(/\.[^\.]+$/, ''), require('./routes/' + ele));
 });
+
+//开发环境静态文件代理
+if(!process.env.LEANCLOUD_APP_ENV || process.env.LEANCLOUD_APP_ENV === 'development'){
+  var concatStream = require('concat-stream');
+  var etag = require('etag');
+  var fresh = require('fresh');
+  app.use(function(req, res, next) { // vue 项目反代
+    var r = request({
+      url: 'http://127.0.0.1:' + (process.env.VUEPORT || 8080) + '/' + req.originalUrl
+    })
+    r.on('response', response => {
+      if(response.statusCode == 404) {
+        response.destroy()
+        next()
+      } else {
+        var res_stream = concatStream(function(buf) {
+          res.setHeader('ETag', etag(buf))
+          if(fresh(req.headers, res._headers)) { // 内容变更
+            res.statusCode = 304;
+            res.end();
+          } else {
+            res.end(buf)
+          }
+        })
+        response.pipe(res_stream)
+      }
+    })
+    r.on('error', () => {
+      next()
+    })
+    req.pipe(r)
+  })
+  /*
+  app.use('/static', express.static('../kache/dist/static'));
+  app.use(express.static('../kache/dist/views'));
+  */
+}else{
+  app.use('/static', express.static('static'));
+  app.use(express.static('views'));
+}
 
 app.use(function(req, res, next) {
   // 如果任何一个路由都没有返回响应，则抛出一个 404 异常给后续的异常处理器
