@@ -187,4 +187,44 @@ router.put('/confirm', function (req, res, next) {
   })
 })
 
+//维修完成
+router.put('/fix_done', function(req, res, next){
+  var orderObjectId = req.body.order_object_id;
+  var order = AV.Object.createWithoutData('Order', orderObjectId);
+  var roleQuery = new AV.Query(AV.Role);
+  roleQuery.equalTo('users', req.currentUser);
+  Promise.all([order.fetch(), roleQuery.find()]).then(function(results){
+    var roles = results[1].map(function(ele, i){
+      return ele.get('name')
+    })
+
+    if(roles.indexOf('appAdmin') == -1){
+      throw {message: '您无权做此操作'};
+    }
+    if(results[0].get('status') != 1){
+      throw {message: '发生错误，此订单不在维修中'};
+    }
+
+    order.set('status', 2);
+    order.save().then(function(result) {
+      //通知报修人
+      result.get('createdBy').fetch().then(function (creator) {
+        var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' + result.id;
+        return notice.notify_fixdone(creator.get('info').weixin.openid, url, result.get('orderId'));
+      }).finally(function () {
+        res.send({
+          success: true,
+          data: {
+            order: result
+          }
+        });
+      })
+    }).catch(function(err){
+      res.status(502).send(err);
+    });
+  }).catch(function(err){
+    res.status(502).send(err);
+  })
+})
+
 module.exports = router;

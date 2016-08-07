@@ -21,7 +21,7 @@ module.exports = {
             },
             "remark": {
                 "value": "测试而已！订单号:" + orderId,
-                "color": "#ff00ff"
+                "color": "#173177"
             }
         };
         return new Promise(function (resolve) {
@@ -47,7 +47,7 @@ module.exports = {
             },
             "remark": {
                 "value": "点击查看订单详情，订单号" + orderId,
-                "color": "#ff00ff"
+                "color": "#173177"
             }
         };
         return new Promise(function (resolve) {
@@ -73,7 +73,33 @@ module.exports = {
             },
             "remark": {
                 "value": "点击查看订单详情，订单号" + orderId,
-                "color": "#ff00ff"
+                "color": "#173177"
+            }
+        };
+        return new Promise(function (resolve) {
+            wapi.sendTemplate(openid, templateId, url, data, function (err, result) {
+                resolve();
+            });
+        })
+    },
+    notify_fixdone(openid, url, orderId){
+        var templateId = 'j4j18Eq7T5pWNe6n28jmDGe4GUzuZfRM7Lsmcemrrxk';
+        var data = {
+            "first": {
+                "value": '维修已完成，请确认',
+                "color": "#ff0000"
+            },
+            "name": {
+                "value": "",
+                "color": "#173177"
+            },
+            "expDate": {
+                "value": "",
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "点击查看订单详情，订单号" + orderId,
+                "color": "#173177"
             }
         };
         return new Promise(function (resolve) {
