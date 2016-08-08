@@ -107,5 +107,31 @@ module.exports = {
                 resolve();
             });
         })
+    },
+    notify_confirm_fixed(openid, url, orderId){
+        var templateId = 'j4j18Eq7T5pWNe6n28jmDGe4GUzuZfRM7Lsmcemrrxk';
+        var data = {
+            "first": {
+                "value": '客户已确认维修完成，等待客户付款',
+                "color": "#ff0000"
+            },
+            "name": {
+                "value": "",
+                "color": "#173177"
+            },
+            "expDate": {
+                "value": "",
+                "color": "#173177"
+            },
+            "remark": {
+                "value": "点击查看订单详情，订单号" + orderId,
+                "color": "#173177"
+            }
+        };
+        return new Promise(function (resolve) {
+            wapi.sendTemplate(openid, templateId, url, data, function (err, result) {
+                resolve();
+            });
+        })
     }
 }

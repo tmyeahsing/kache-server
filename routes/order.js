@@ -185,7 +185,7 @@ router.put('/confirm', function (req, res, next) {
       res.status(502).send(err);
     })
   })
-})
+});
 
 //维修完成
 router.put('/fix_done', function(req, res, next){
@@ -225,6 +225,32 @@ router.put('/fix_done', function(req, res, next){
   }).catch(function(err){
     res.status(502).send(err);
   })
-})
+});
+
+//报修人确认下单
+router.put('/confirm_fixed', function (req, res, next) {
+  var orderObjectId = req.body.order_object_id;
+  var orderData = AV.Object.createWithoutData('Order', orderObjectId);
+  orderData.fetch().then(function(order){
+    if(order.get('status') != 2){
+      throw {message: '发生错误，维修厂未确认维修完成'}
+    }
+
+    orderData.set('status', 3);
+    orderData.save().then(function(order){
+      var url =  req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　order.id;
+      var p1 = notice.notify_confirm_fixed('oKGD_vnz-JnTTBKbxj6aolZ0IFGc', url, order.get('orderId'));
+      var p2 = notice.notify_confirm_fixed('oKGD_vsUGIsc0BEoPYj-eCqeglZM', url, order.get('orderId'));
+      Promise.all([p1, p2]).finally(function(){
+        res.send({
+          success: true,
+          data: order
+        })
+      })
+    }).catch(function(err){
+      res.status(502).send(err);
+    })
+  })
+});
 
 module.exports = router;

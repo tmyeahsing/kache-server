@@ -25,4 +25,34 @@ var wapi = global.wapi = new api(config.appId, config.appSecret, function(cb){
         cb(err)
     });
 });
+
+wapi.registerTicketHandle(getTicketToken, saveTicketToken);
+
+// getTicketToken
+function getTicketToken(type, cb) {
+    "use strict";
+    var query = new AV.Query(Cache);
+    query.equalTo('key', 'wechat_jssdk_ticket');
+    query.find().then(function (results) {
+        if(results[0] && results[0].get('value')){
+            cb(null, results[0].get('value'));
+        }else{
+            cb(null, '');
+        }
+    }).catch(function(err){
+        return cb(err);
+    })
+}
+// saveTicketToken
+function saveTicketToken(type, token, cb) {
+    "use strict";
+    var cache = AV.Object.createWithoutData('Cache', '57a86d911532bc0060d73762');
+    cache.set('value', token.ticket);
+    cache.save().then(function(result){
+        cb(null);
+    }).catch(function(err){
+        return cb(err);
+    });
+}
+
 module.exports = wapi;
