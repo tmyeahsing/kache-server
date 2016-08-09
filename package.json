@@ -33,7 +33,8 @@
     "url": "^0.11.0",
     "wechat": "^2.0.3",
     "wechat-api": "^1.28.0",
-    "wechat-oauth": "^1.1.1"
+    "wechat-oauth": "^1.1.1",
+    "xmljson": "^0.2.0"
   },
   "engines": {
     "node": "4.x"
