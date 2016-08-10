@@ -14,7 +14,6 @@ router.post('/unifiedorder', function(req, res, next){
 		console.log(err)
 		console.log(xml)
 	});
-	
 });
 
 module.exports = router;

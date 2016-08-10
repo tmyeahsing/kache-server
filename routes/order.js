@@ -210,7 +210,7 @@ router.put('/fix_done', function(req, res, next){
       //通知报修人
       result.get('createdBy').fetch().then(function (creator) {
         var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' + result.id;
-        return notice.notify_fixdone(creator.get('info').weixin.openid, url, result.get('orderId'));
+        return notice.notify_fix_done(creator.get('info').weixin.openid, url, result.get('orderId'));
       }).finally(function () {
         res.send({
           success: true,
@@ -227,7 +227,7 @@ router.put('/fix_done', function(req, res, next){
   })
 });
 
-//报修人确认下单
+//报修人确认维修完成
 router.put('/confirm_fixed', function (req, res, next) {
   var orderObjectId = req.body.order_object_id;
   var orderData = AV.Object.createWithoutData('Order', orderObjectId);
@@ -250,7 +250,92 @@ router.put('/confirm_fixed', function (req, res, next) {
     }).catch(function(err){
       res.status(502).send(err);
     })
+  }).catch(function(err){
+    res.status(502).send(err);
   })
+});
+
+//申报现金支付
+router.put('/cash_pay', function(req, res, next){
+  var orderObjectId = req.body.order_object_id;
+  var orderQuery = new AV.Query('Order');
+  orderQuery.include('quotation');
+  orderQuery.get(orderObjectId).then(function(order){
+    var quotation = order.get('quotation').attributes;
+
+    if(order.get('status') != 3){
+      throw {message: '发生错误，此订单目前无法支付'}
+    }
+    console.log(order.get('cashConfirming'))
+
+    if(order.get('cashConfirming')){
+      throw {message: '发生错误，有待确认的现金支付申请，如有疑问请联系客服'}
+    }
+
+    if((quotation.dropInFee+(quotation.manHours*quotation.manUnitPrice)+quotation.partsTotal-quotation.payed) <= 0){
+      throw {message: '发生错误，此订单已结清'}
+    }
+
+    order.set('cashConfirming', true);
+    order.save().then(function(order){
+      var url =  req.protocol + '://' + req.hostname + '/order_detail_admin.html?id=' +　order.id;
+      var p1 = notice.notify_cash_pay('oKGD_vnz-JnTTBKbxj6aolZ0IFGc', url, order.get('orderId'));
+      var p2 = notice.notify_cash_pay('oKGD_vsUGIsc0BEoPYj-eCqeglZM', url, order.get('orderId'));
+      Promise.all([p1, p2]).finally(function(){
+        res.send({
+          success: true
+        })
+      })
+    }).catch(function(err){
+      res.status(502).send(err);
+    })
+  }).catch(function(err){
+    res.status(502).send(err);
+  })
+});
+
+//确认收到现金支付款
+router.put('/confirm_income', function(req, res, next){
+  var orderObjectId = req.body.order_object_id;
+  var income = parseInt(req.body.income);
+  var orderQuery = new AV.Query('Order');
+  orderQuery.include('quotation');
+  orderQuery.include('createdBy');
+  orderQuery.get(orderObjectId).then(function(order){
+    var quotation = order.get('quotation');
+    var payed = quotation.get('payed');
+    var left = quotation.attributes.dropInFee+(quotation.attributes.manHours*quotation.attributes.manUnitPrice)+quotation.attributes.partsTotal-quotation.attributes.payed - income;
+
+    if(left < 0){
+      throw {message: '收款金额不能超过欠款金额'}
+    }
+
+    quotation.set('payed', payed + income);
+    quotation.save().then(function(quotation_r){
+      var creator = order.get('createdBy');
+      order.set('cashConfirming', false);
+      if(left == 0){
+        order.set('status', 4);
+      }
+      order.save().then(function(order_r){
+        console.log(order_r)
+        var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' + order.id;
+        return notice.notify_cofirm_income(creator.get('info').weixin.openid, url, order.get('orderId'), income, left);
+      }).finally(function () {
+        res.send({
+          success: true,
+          data: {
+            status: order_r.get('status'),
+            quotation: quotation_r
+          }
+        });
+      })
+    }).catch(function(err){
+      res.status(502).send(err);
+    });
+  }).catch(function(err){
+    res.status(502).send(err);
+  });
 });
 
 module.exports = router;
