@@ -266,7 +266,6 @@ router.put('/cash_pay', function(req, res, next){
     if(order.get('status') != 3){
       throw {message: '发生错误，此订单目前无法支付'}
     }
-    console.log(order.get('cashConfirming'))
 
     if(order.get('cashConfirming')){
       throw {message: '发生错误，有待确认的现金支付申请，如有疑问请联系客服'}
@@ -318,14 +317,14 @@ router.put('/confirm_income', function(req, res, next){
         order.set('status', 4);
       }
       order.save().then(function(order_r){
-        console.log(order_r)
         var url = req.protocol + '://' + req.hostname + '/order_detail.html?id=' + order.id;
+        order = order_r;
         return notice.notify_cofirm_income(creator.get('info').weixin.openid, url, order.get('orderId'), income, left);
       }).finally(function () {
         res.send({
           success: true,
           data: {
-            status: order_r.get('status'),
+            status: order.get('status'),
             quotation: quotation_r
           }
         });
